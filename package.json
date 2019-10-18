@@ -5,10 +5,15 @@
   "private": true,
   "devDependencies": {
     "mocha": "5.0.0",
-    "unit.js": "2.0.0",
-    "supertest": "3.0.0"
+    "supertest": "3.0.0",
+    "unit.js": "^2.1.0"
   },
   "scripts": {
-    "test": "mocha --recursive tests --exit"
+    "test": "mocha --recursive tests --exit",
+    "client-install": "npm install --prefix frontend",
+    "start": "node app.js",
+    "server": "nodemon app.js",
+    "client": "npm start --prefix frontend",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
   }
 }
