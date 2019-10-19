@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import io from 'socket.io-client'
-import OAuth from './OAuth'
+import OAuth from './components/OAuth'
 import { API_URL } from './config'
 import './App.css'
 const socket = io(API_URL)
