@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const passport = require("passport");
 const authRoutes = require('./routes/auth-routers');
 const FacebookStrategy = require("passport-facebook");
+const cors = require('cors');
 const keys = require('./config');
 
 let user = {};
