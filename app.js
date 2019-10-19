@@ -1,8 +1,65 @@
+const express = require("express");
+const bodyParser = require("body-parser");
+const passport = require("passport");
+const authRoutes = require('./routes/auth-routers');
+const FacebookStrategy = require("passport-facebook");
+const keys = require('./config');
+
+let user = {};
+
+passport.serializeUser((user, cb) => {
+  cb(bull, user);
+});
+
+passport.deserializeUser((user, cb) => {
+  cb(null, user);
+});
+
+//Facebook Strategy
+passport.use(new FacebookStrategy({
+  clientID: keys.FACEBOOK.clientID,
+  clientSecret: keys.FACEBOOK.clientSecret,
+  callbackUrl: "auth/facebook/callback"
+  },
+  (accessToken, refreshToken, profile, cb) =>  {
+    console.log(JSON.stringify(profile));
+    user = { ...profile};
+    return cb(null, profile);
+  }));
+
+var app = express();
+
+app.use(cors());
+app.use(passport.initialize());
+
+app.get("/auth/facebook", passport.authenticate("facebook"));
+app.get("/auth/facebook/callback",
+  passport.authenticate(("facebook"),
+  (req, res) => {
+    res.redirect("/");
+  }));
+
+// Home Route
+app.get('/', (req, res) => {
+  res.render('app');
+});
+
+// Body parser middleware
+app.use(
+  bodyParser.urlencoded({
+    extended: false
+  })
+);
+app.use(bodyParser.json());
+
+// User Auth
+app.use('/auth', authRoutes);
+
 var port = process.env.PORT || 5000,
     http = require('http'),
     fs = require('fs');
 
-var app = http.createServer(function (req, res) {
+app = http.createServer(function (req, res) {
   if (req.url.indexOf('/img') != -1) {
     var filePath = req.url.split('/img')[1];
     fs.readFile(__dirname + '/public/img' + filePath, function (err, data) {
@@ -56,5 +113,6 @@ var app = http.createServer(function (req, res) {
     });
   }
 }).listen(port, '0.0.0.0');
+
 
 module.exports = app;
