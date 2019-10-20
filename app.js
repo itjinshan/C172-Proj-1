@@ -1,64 +1,99 @@
+require('dotenv').config()
 const express = require("express");
-const bodyParser = require("body-parser");
+const path = require('path');
+const fs = require('fs');
+const https = require('https');
+const session = require('express-session')
+const socketio = require('socket.io');
+const authRouter = require('./lib/auth.router')
+const passportInit = require('./lib/passport.init');
 const passport = require("passport");
-const authRoutes = require('./routes/auth-routers');
-const FacebookStrategy = require("passport-facebook");
+const { SESSION_SECRET, CLIENT_ORIGIN } = require('./config');
 const cors = require('cors');
-const keys = require('./config');
 
-let user = {};
 
-passport.serializeUser((user, cb) => {
-  cb(bull, user);
-});
-
-passport.deserializeUser((user, cb) => {
-  cb(null, user);
-});
-
-//Facebook Strategy
-passport.use(new FacebookStrategy({
-  clientID: keys.FACEBOOK.clientID,
-  clientSecret: keys.FACEBOOK.clientSecret,
-  callbackUrl: "auth/facebook/callback"
-  },
-  (accessToken, refreshToken, profile, cb) =>  {
-    console.log(JSON.stringify(profile));
-    user = { ...profile};
-    return cb(null, profile);
-  }));
-
+//const server = https/createServer(certOptions, app);
 var app = express();
 
-app.use(cors());
+app.use(express.json());
 app.use(passport.initialize());
+passportInit();
 
-app.get("/auth/facebook", passport.authenticate("facebook"));
-app.get("/auth/facebook/callback",
-  passport.authenticate(("facebook"),
-  (req, res) => {
-    res.redirect("/");
-  }));
+app.use(cors({
+  origin: CLIENT_ORIGIN
+}));
 
-// Home Route
-app.get('/', (req, res) => {
-  res.render('app');
+// saveUninitialized: true allows us to attach the socket id to the session
+// before we have athenticated the user
+app.use(session({ 
+  secret: process.env.SESSION_SECRET, 
+  resave: true, 
+  saveUninitialized: true 
+}));
+
+// // Connecting sockets to the server and adding them to the request 
+// // so that we can access them later in the controller
+// const io = socketio(app);
+// app.set('io', io);
+
+// Direct all requests to the auth router
+app.use('/', authRouter);
+
+app.listen(process.env.PORT || 8080, () => {
+  console.log('listening on 8080...')
 });
 
-// Body parser middleware
-app.use(
-  bodyParser.urlencoded({
-    extended: false
-  })
-);
-app.use(bodyParser.json());
+// passport.serializeUser((user, cb) => {
+//   cb(bull, user);
+// });
 
-// User Auth
-app.use('/auth', authRoutes);
+// passport.deserializeUser((user, cb) => {
+//   cb(null, user);
+// });
+
+// //Facebook Strategy
+// passport.use(new FacebookStrategy({
+//   clientID: process.env.FBclientID,
+//   clientSecret: process.env.FBclientSecret,
+//   callbackUrl: "auth/facebook/callback"
+//   },
+//   (accessToken, refreshToken, profile, cb) =>  {
+//     console.log(JSON.stringify(profile));
+//     user = { ...profile};
+//     return cb(null, profile);
+//   }));
+
+
+
+// app.use(cors());
+// app.use(passport.initialize());
+
+// app.get("/auth/facebook", passport.authenticate("facebook"));
+// app.get("/auth/facebook/callback",
+//   passport.authenticate(("facebook"),
+//   (req, res) => {
+//     res.redirect("/");
+//   }));
+
+// // Home Route
+// app.get('/', (req, res) => {
+//   res.render('app');
+// });
+
+// // Body parser middleware
+// app.use(
+//   bodyParser.urlencoded({
+//     extended: false
+//   })
+// );
+// app.use(bodyParser.json());
+
+// // User Auth
+// app.use('/auth', authRoutes);
 
 var port = process.env.PORT || 5000,
     http = require('http'),
-    fs = require('fs');
+    //fs = require('fs');
 
 app = http.createServer(function (req, res) {
   if (req.url.indexOf('/img') != -1) {
